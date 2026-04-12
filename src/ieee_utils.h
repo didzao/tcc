@@ -26,6 +26,9 @@ typedef union {
     } bits;
 } DoubleIEEE;
 
+// Inverte o bits de sinal usando XOR 
+#define InvertSign(y) ((y).bits.s ^= 1)
+
 // Macros de utilidade
 #define MULT(a, b) ((a) * (b))
 
@@ -41,6 +44,14 @@ typedef union {
     (w).bits.E += (k);                     \
     (w).x += (y).x;                        \
 } while(0)
+
+#define MULT_NICE_NUMBER_NEG_NEW(y, w, k) do { \
+    (w).x = (y).x;                        \
+    InvertSign(w);                         \
+    (w).bits.E += (k);                     \
+    (w).x += (y).x;                        \
+} while(0)
+
 
 // Protótipo de função (exemplo se quiser transformar as macros em funções reais)
 void imprimir_componentes_float(FloatIEEE val);
