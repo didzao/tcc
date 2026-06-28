@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "ieee_utils.h"
 
-void imprimir_componentes_float(FloatIEEE val) {
+void print_float_components(FloatIEEE val) {
     printf("\n--- Analise IEEE 754 ---");
     printf("\n Valor real: %f", val.x);
     printf("\n Sinal:      %d", val.bits.s);

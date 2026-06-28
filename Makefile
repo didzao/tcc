@@ -1,9 +1,9 @@
 # Makefile simples
 # all:
-# 	gcc *.c -o main
+#   gcc *.c -o main
 
 # run:
-# 	./main
+#   ./main
 
 # ----------
 
@@ -12,6 +12,7 @@ SRC_DIR = src
 BUILD_DIR = build
 INC_DIR = include
 TEST_DIR = tests
+TOOLS_DIR = tools
 UNITY_DIR = $(TEST_DIR)/unity
 
 # ⚙️ Compilador e flags
@@ -20,39 +21,43 @@ CFLAGS = -Wall -Wextra -Werror -std=c11 -I$(INC_DIR)
 LDFLAGS = -lm
 DEBUG_FLAGS = -g
 
-# 📦 Arquivos fonte
+# 📦 Arquivos fonte e tabelas
 SRCS = $(wildcard $(SRC_DIR)/*.c)
+LUT_HEADER = $(INC_DIR)/cordic_lut.h
+TABLE_GEN_SRC = $(TOOLS_DIR)/build_cordic_table.c
+TABLE_GEN_BIN = $(BUILD_DIR)/table_generator
 
-# 🎯 Nomes dos executáveis (sem caminho)
-TARGETS = $(notdir $(SRCS:.c=))
+# 🎯 Nome do executável final unificado
+TARGET = $(BUILD_DIR)/main
 
-# 📦 Executáveis dentro de build/
-TARGET_PATHS = $(addprefix $(BUILD_DIR)/, $(TARGETS))
+# 🔄 Regra padrão (Gera a tabela primeiro, depois compila o pacote)
+all: $(LUT_HEADER) $(TARGET)
 
-# 🔄 Regra padrão
-all: $(TARGET_PATHS)
+# 📐 Regra para gerar o arquivo de tabelas automaticamente
+$(LUT_HEADER): $(TABLE_GEN_SRC)
+	@mkdir -p $(BUILD_DIR)
+	@echo "--- Compilando e executando o gerador de tabelas ---"
+	$(CC) $(TABLE_GEN_SRC) -o $(TABLE_GEN_BIN) $(LDFLAGS)
+	./$(TABLE_GEN_BIN)
+
+# 🔨 Regra de compilação unificada (junta todos os .c de uma vez)
+$(TARGET): $(SRCS) $(LUT_HEADER)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(SRCS) -o $(TARGET) $(LDFLAGS)
+
+# ▶️ Rodar o executável principal diretamente
+run: all
+	@echo "--- Executando $(TARGET) ---"
+	./$(TARGET)
 
 # 🧪 Testes
-test:
+test: $(LUT_HEADER)
 	$(CC) $(CFLAGS) -DTEST \
 	$(filter-out $(SRC_DIR)/main.c, $(SRC_DIR)/*.c) \
 	$(TEST_DIR)/test_*.c \
 	$(UNITY_DIR)/unity.c \
 	-o test_runner $(LDFLAGS)
 	./test_runner
-
-# 🔨 Compilar cada .c em um executável (básico/individual)
-$(BUILD_DIR)/%: $(SRC_DIR)/%.c
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
-
-# ▶️ Rodar Dinamicamente (ex: make run-main ARGS="ieee_utils.c")
-# Esta regra recompila o alvo incluindo as dependências passadas em ARGS
-run-%:
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(SRC_DIR)/$*.c $(addprefix $(SRC_DIR)/, $(ARGS)) -o $(BUILD_DIR)/$* $(LDFLAGS)
-	@echo "--- Executando $(BUILD_DIR)/$* ---"
-	./$(BUILD_DIR)/$*
 
 # 🐞 Debug
 debug: CFLAGS += $(DEBUG_FLAGS)
