@@ -3,21 +3,14 @@
 #include "cordic_hyperbolic.h"
 #include "cordic_lut.h"
 
-/* Armazena o valor de ln(2) computado dinamicamente via CORDIC */
-static double cached_ln2 = 0.0;
-
 /*
  * Obtem ln(2) calculado via CORDIC:
  * ln(2) = 2 * atanh((2 - 1) / (2 + 1)) = 2 * atanh(1/3)
  * Como 1/3 ~= 0.3333 < 0.8069, o calculo converge sem reducao de argumento.
  */
 static double get_cordic_ln2(int iterations) {
-    if (cached_ln2 == 0.0) {
-        cached_ln2 = 2.0 * cordic_hyperbolic_atanh(1.0 / 3.0, iterations);
-    }
-    return cached_ln2;
+    return 2.0 * cordic_hyperbolic_atanh(1.0 / 3.0, iterations);
 }
-
 /* 
  * Exponencial e^x = cosh(x) + sinh(x)
  * Aplica reducao de argumento: e^x = 2^k * e^(x - k*ln(2))
