@@ -67,6 +67,37 @@ CordicVector cordic_circular_vector(CordicVector v, int iterations) {
 
 /* Seno e Cosseno simultâneos via Rotação */
 void cordic_circular_sin_cos(double angle_rad, double *sin_out, double *cos_out, int iterations) {
+    if (!sin_out && !cos_out) return;
+
+    // 1. Tratamento de NaN e Infinito (IEEE 754)
+    if (isnan(angle_rad) || isinf(angle_rad)) {
+        if (cos_out != NULL) *cos_out = NAN;
+        if (sin_out != NULL) *sin_out = NAN;
+        return;
+    }
+    
+    const double TWO_PI = 6.28318530717958647692;
+    const double HALF_PI = 1.57079632679489661923;
+
+    // 2. Redução periódica para o intervalo [-PI, PI]
+    angle_rad = fmod(angle_rad, TWO_PI);
+    if (angle_rad > PI) {
+        angle_rad -= TWO_PI;
+    } else if (angle_rad < -PI) {
+        angle_rad += TWO_PI;
+    }
+
+    // 3. Mapeamento para [-HALF_PI, HALF_PI] com inversão de sinal (2º e 3º quadrantes)
+    double sign = 1.0;
+    if (angle_rad > HALF_PI) {
+        angle_rad -= PI;
+        sign = -1.0;
+    } else if (angle_rad < -HALF_PI) {
+        angle_rad += PI;
+        sign = -1.0;
+    }
+
+    // 4. Execução do CORDIC com ângulo garantidamente em [-PI/2, PI/2]
     CordicVector v;
     v.x.x = CORDIC_K_CIRCULAR;
     v.y.x = 0.0;
@@ -74,11 +105,12 @@ void cordic_circular_sin_cos(double angle_rad, double *sin_out, double *cos_out,
 
     CordicVector result = cordic_circular_rotate(v, iterations);
 
+    // 5. Aplicação do sinal referente ao quadrante original
     if (cos_out != NULL) {
-        *cos_out = result.x.x;
+        *cos_out = sign * result.x.x;
     }
     if (sin_out != NULL) {
-        *sin_out = result.y.x;
+        *sin_out = sign * result.y.x;
     }
 }
 

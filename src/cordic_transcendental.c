@@ -38,6 +38,14 @@ double cordic_exp(double x, int iterations) {
  * ln(x) = ln(m) + exp_val * ln(2)
  */
 double cordic_ln(double x, int iterations) {
+    if (isnan(x)) return NAN;
+
+    if (x < 0.0) return NAN;
+
+    if (x == 0.0) return -INFINITY;
+    
+    if (isinf(x)) return INFINITY;
+
     if (x <= 0.0) {
         return (x == 0.0) ? -INFINITY : NAN; /* ln nao definido para x <= 0 */
     }
